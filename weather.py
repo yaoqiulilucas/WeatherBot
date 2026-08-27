@@ -13,6 +13,7 @@ FEISHU_WEBHOOK = "https://open.feishu.cn/open-apis/bot/v2/hook/96ab3d4f-7ddd-4d4
 CITIES = [
   {"name": "上海", "id": "101020100"},
   {"name": "深圳", "id": "101280601"},
+  {"name": "伦敦", "id": "101924051"},
 ]
 
 def get_weather(city_name, location_id):
