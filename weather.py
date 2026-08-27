@@ -1,6 +1,6 @@
-  import requests
-  import os
-  import sys
+import requests
+import os
+import sys
 
   # 读取环境变量
   API_KEY = os.environ.get("QWEATHER_KEY")
