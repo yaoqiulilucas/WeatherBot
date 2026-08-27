@@ -1,8 +1,7 @@
 import requests
-import os
-import sys
+  import os
+  import sys
 
-  # 读取环境变量
   API_KEY = os.environ.get("QWEATHER_KEY")
   if not API_KEY:
       print("错误：未找到 QWEATHER_KEY")
@@ -23,7 +22,7 @@ import sys
           data = res.json()
           print(f"{city_name} API响应: {data}")
           if "now" not in data:
-              print(f"{city_name} 错误：响应中没有 now 字段，code={data.get('code')}")
+              print(f"错误：code={data.get('code')}")
               return None
           return data["now"]
       except Exception as e:
@@ -35,7 +34,7 @@ import sys
       for city in CITIES:
           w = get_weather(city["name"], city["id"])
           if w is None:
-              lines.append(f"📍 {city['name']}：天气数据获取失败\n")
+              lines.append(f"📍 {city['name']}：数据获取失败\n")
               continue
           lines.append(
               f"━━━━━━━━━━━━━━━\n"
@@ -48,7 +47,7 @@ import sys
               f"🔵 气压：{w['pressure']}hPa\n"
           )
       return "\n".join(lines)
-  
+
   def send_to_feishu(msg):
       try:
           res = requests.post(
@@ -60,9 +59,8 @@ import sys
       except Exception as e:
           print(f"飞书推送失败: {e}")
           sys.exit(1)
-
+  
   msg = build_message()
-  print("=== 即将发送的消息 ===")
   print(msg)
   send_to_feishu(msg)
   print("完成")
