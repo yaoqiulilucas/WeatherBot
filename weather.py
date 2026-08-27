@@ -25,7 +25,7 @@ def get_weather(city_name, location_id):
               print(f"错误：code={data.get('code')}")
               return None
           return data["now"]
-      except Exception as e:
+    except Exception as e:
           print(f"{city_name} 请求失败: {e}")
           return None
 
@@ -49,14 +49,14 @@ def build_message():
       return "\n".join(lines)
 
 def send_to_feishu(msg):
-      try:
+    try:
           res = requests.post(
               FEISHU_WEBHOOK,
               json={"msg_type": "text", "content": {"text": msg}},
               timeout=10
           )
           print(f"飞书响应: {res.status_code} {res.text}")
-      except Exception as e:
+    except Exception as e:
           print(f"飞书推送失败: {e}")
           sys.exit(1)
   
