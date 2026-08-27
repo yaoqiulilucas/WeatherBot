@@ -6,13 +6,41 @@
     workflow_dispatch:
 
   jobs:
-    push-weather:
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v3
-        - uses: actions/setup-python@v4
-          with:
-            python-version: '3.10'
-        - run: pip install requests
-        - run: python weather.py
+  ---
+  第二步：更新 weather.yml
+
+  加上传入 secret 的配置：
+
+  name: Daily Weather Push
+
+  on:
+    schedule:
+      - cron: '30 23 * * *'
+    workflow_dispatch:
+
+  jobs:
+      )
+
+  msg = "\n".join(lines)
+  requests.post(FEISHU_WEBHOOK, json={
+      "msg_type": "text",
+      "content": {"text": msg}
+  })
+  print("推送成功")
+
+  ---
+  第二步：更新 weather.yml
+
+  加上传入 secret 的配置：
+
+  name: Daily Weather Push
+
+  on:
+    schedule:
+      - cron: '30 23 * * *'
+    workflow_dispatch:
+
+  jobs:
+  print("推送成功")
+
 
