@@ -245,8 +245,8 @@ def send_to_feishu(card):
           print(f"飞书推送失败: {e}")
           sys.exit(1)
 
-  cities_data = []
-  for city in CITIES:
+cities_data = []
+for city in CITIES:
       w = get_weather(city["name"], city["id"])
       cities_data.append({"name": city["name"], "weather": w})
 
