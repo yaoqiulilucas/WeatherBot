@@ -5,15 +5,15 @@ from datetime import datetime
 FEISHU_WEBHOOK = "https://open.feishu.cn/open-apis/bot/v2/hook/96ab3d4f-7ddd-4d43-8002-3ef94ca2659d"
 
 def get_zhihu_hot():
-      url = "https://tenapi.cn/v2/zhihu"
+      url = "https://api.vvhan.com/api/hotlist/zhihuHot"
       try:
           res = requests.get(url, timeout=10)
+          print(f"原始响应: {res.status_code} {res.text[:200]}")
           data = res.json()
-          print(f"知乎热榜响应: {data}")
           items = data.get("data", [])
           result = []
           for item in items[:5]:
-              title = item.get("name", "")
+              title = item.get("title", "")
               hot_url = item.get("url", "")
               hot_val = item.get("hot", "")
               result.append({"title": title, "url": hot_url, "hot": str(hot_val)})
