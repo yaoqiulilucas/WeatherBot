@@ -32,19 +32,16 @@ def get_weather(city_name, location_id):
           print(f"{city_name} 请求失败: {e}")
           return None
 
+from lunardate import LunarDate
+
 def get_almanac():
-      today = datetime.now().strftime("%Y%m%d")
-      url = f"https://www.mxnzp.com/api/lunar_calendar/single/{today}?app_id={MXNZP_APP_ID}&app_secret={MXNZP_SECRET}"
+      today = datetime.now()
       try:
-          res = requests.get(url, timeout=10)
-          data = res.json()
-          print(f"黄历完整响应: {data}")
-          if data.get("code") != 1:
-              print(f"黄历错误：{data.get('msg')}")
-              return None
-          return data.get("data")
+          lunar = LunarDate.fromSolarDate(today.year, today.month, today.day)
+          lunar_str = f"{lunar.year}年 {lunar.month}月{lunar.day}日"
+          return {"lunarStr": lunar_str}
       except Exception as e:
-          print(f"黄历请求失败: {e}")
+          print(f"农历计算失败: {e}")
           return None
 
 def build_card(cities_data, almanac):
@@ -53,33 +50,12 @@ def build_card(cities_data, almanac):
 
       # 黄历部分
       if almanac:
-          print(f"黄历字段列表: {list(almanac.keys())}")
-
-          # 农历日期
-          lunar = almanac.get("lunarCalendar") or \
-                  f"{almanac.get('lunarYear','')} {almanac.get('lunarMonth','')}{almanac.get('lunarDay','')}"
-
-          # 宜忌（兼容多种字段名）
-          day_tips = almanac.get("dayTips") or {}
-          yi = almanac.get("yi") or \
-               almanac.get("suited") or \
-               day_tips.get("good") or "暂无"
-          ji = almanac.get("ji") or \
-               almanac.get("taboo") or \
-               day_tips.get("bad") or "暂无"
-
-          solar_term = almanac.get("solarTerms") or almanac.get("solarTerm") or ""
-          solar_str = f"　🌿 {solar_term}" if solar_term else ""
-
+          lunar = almanac.get("lunarStr", "")
           elements.append({
               "tag": "div",
               "text": {
                   "tag": "lark_md",
-                  "content": (
-                      f"**📅 {today}**　{lunar}{solar_str}\n"
-                      f"✅ **宜**　{yi}\n"
-                      f"❌ **忌**　{ji}"
-                  )
+                  "content": f"**📅 {today}**　农历 {lunar}"
               }
           })
           elements.append({"tag": "hr"})
