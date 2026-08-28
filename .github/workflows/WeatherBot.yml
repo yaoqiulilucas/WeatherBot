@@ -4,6 +4,7 @@ on:
     schedule:
       - cron: '0 1 * * *'
       - cron: '0 7 * * *'
+      - cron: '0 2,4,6,8,10 * * 1-5'
     workflow_dispatch:
 
 jobs:
@@ -38,4 +39,19 @@ jobs:
           run: pip install requests
         - name: Run London weather script
           run: python london_weather.py
+
+    push-zhihu:
+      runs-on: ubuntu-latest
+      if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 2,4,6,8,10 * * 1-5'
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+        - name: Set up Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: '3.11'
+        - name: Install dependencies
+          run: pip install requests
+        - name: Run Zhihu hot script
+          run: python zhihu_hot.py
 
