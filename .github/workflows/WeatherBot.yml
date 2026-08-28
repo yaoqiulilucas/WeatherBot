@@ -1,5 +1,5 @@
 name: Daily Weather Push
-
+     
 on:
     schedule:
       - cron: '0 1 * * *'
@@ -9,10 +9,11 @@ on:
 jobs:
     push-weather:
       runs-on: ubuntu-latest
+      if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 1 * * *'
       steps:
         - name: Checkout code
           uses: actions/checkout@v4
-
+  
         - name: Set up Python
           uses: actions/setup-python@v5
           with:
@@ -26,7 +27,7 @@ jobs:
           env:
             QWEATHER_KEY: ${{ secrets.QWEATHER_KEY }}
 
-push-london:
+ push-london:
       runs-on: ubuntu-latest
       if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 7 * * *'
       steps:
@@ -40,7 +41,6 @@ push-london:
 
         - name: Install dependencies
           run: pip install requests
-
+  
         - name: Run London weather script
           run: python london_weather.py
-
