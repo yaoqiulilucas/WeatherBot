@@ -1,7 +1,8 @@
 import requests
 import os
 import sys
-from datetime import datetime
+from datetime import date
+from chinese_calendar import is_workday
 from lunardate import LunarDate
 
 API_KEY = os.environ.get("QWEATHER_KEY")
@@ -314,6 +315,10 @@ def send_to_feishu(card):
       except Exception as e:
           print(f"飞书推送失败: {e}")
           sys.exit(1)
+
+if not is_workday(date.today()):
+      print("今日非工作日，跳过推送")
+      sys.exit(0)
 
 cities_data = []
 for city in CITIES:
