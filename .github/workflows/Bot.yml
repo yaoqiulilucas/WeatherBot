@@ -1,10 +1,10 @@
-name: Daily Weather Push
+name: Daily Push
 
 on:
     schedule:
       - cron: '0 1 * * *'
       - cron: '0 7 * * *'
-      - cron: '0 2,4,6,8,10 * * 1-5'
+      - cron: '0 4 * * 1-5'
     workflow_dispatch:
 
 jobs:
@@ -40,9 +40,9 @@ jobs:
         - name: Run London weather script
           run: python london_weather.py
 
-    push-zhihu:
+    push-news:
       runs-on: ubuntu-latest
-      if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 2,4,6,8,10 * * 1-5'
+      if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 4 * * 1-5'
       steps:
         - name: Checkout code
           uses: actions/checkout@v4
@@ -52,6 +52,6 @@ jobs:
             python-version: '3.11'
         - name: Install dependencies
           run: pip install requests
-        - name: Run Zhihu hot script
+        - name: Run news script
           run: python zhihu_hot.py
-
+  
