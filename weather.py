@@ -17,7 +17,31 @@ CITIES = [
       {"name": "深圳", "id": "101280601"},
 ]
 
-# 黄历宜忌，按农历日对12轮循环
+HEAVENLY_STEMS = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"]
+EARTHLY_BRANCHES = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"]
+
+LUNAR_MONTH_NAMES = ["正","二","三","四","五","六","七","八","九","十","冬","腊"]
+LUNAR_DAY_NAMES = [
+      "初一","初二","初三","初四","初五","初六","初七","初八","初九","初十",
+      "十一","十二","十三","十四","十五","十六","十七","十八","十九","二十",
+      "廿一","廿二","廿三","廿四","廿五","廿六","廿七","廿八","廿九","三十"
+]
+
+SOLAR_TERMS = {
+      (1,6):"小寒",(1,20):"大寒",
+      (2,4):"立春",(2,19):"雨水",
+      (3,6):"惊蛰",(3,21):"春分",
+      (4,5):"清明",(4,20):"谷雨",
+      (5,6):"立夏",(5,21):"小满",
+      (6,6):"芒种",(6,21):"夏至",
+      (7,7):"小暑",(7,23):"大暑",
+      (8,7):"立秋",(8,23):"处暑",
+      (9,8):"白露",(9,23):"秋分",
+      (10,8):"寒露",(10,23):"霜降",
+      (11,7):"立冬",(11,22):"小雪",
+      (12,7):"大雪",(12,22):"冬至",
+}
+
 YI_JI_TABLE = [
       ("祈福、出行、嫁娶", "动土、安葬"),
       ("入宅、开业、交易", "出行、探病"),
@@ -49,36 +73,41 @@ YI_JI_TABLE = [
       ("嫁娶、出行、祭祀", "开市、安葬"),
       ("开市、交易、求财", "嫁娶、动土"),
       ("祭祀、入学、理发", "出行、安床"),
-]
+ ]
 
-LUNAR_MONTH_NAMES = ["正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "冬", "腊"]
-LUNAR_DAY_NAMES = [
-      "初一","初二","初三","初四","初五","初六","初七","初八","初九","初十",
-      "十一","十二","十三","十四","十五","十六","十七","十八","十九","二十",
-      "廿一","廿二","廿三","廿四","廿五","廿六","廿七","廿八","廿九","三十"
-]
+def get_ganzhi_year(year):
+      stem = HEAVENLY_STEMS[(year - 4) % 10]
+      branch = EARTHLY_BRANCHES[(year - 4) % 12]
+      return f"{stem}{branch}"
 
-SOLAR_TERMS = {
-      (1,20): "大寒", (2,4): "立春", (2,19): "雨水",
-      (3,6): "惊蛰", (3,21): "春分", (4,5): "清明",
-      (4,20): "谷雨", (5,6): "立夏", (5,21): "小满",
-      (6,6): "芒种", (6,21): "夏至", (7,7): "小暑",
-      (7,23): "大暑", (8,7): "立秋", (8,23): "处暑",
-      (9,8): "白露", (9,23): "秋分", (10,8): "寒露",
-      (10,23): "霜降", (11,7): "立冬", (11,22): "小雪",
-      (12,7): "大雪", (12,22): "冬至", (1,6): "小寒",
-}
-  
+def get_ad_tip(yi, ji):
+      yi_expand = any(k in yi for k in ["开市", "纳财", "交易", "立券", "开业"])
+      yi_test   = any(k in yi for k in ["出行", "会友", "入学", "求职", "开光"])
+      yi_clean  = any(k in yi for k in ["祭祀", "沐浴", "扫舍", "理发"])
+      ji_expand = any(k in ji for k in ["开市", "纳财", "交易"])
+      ji_test   = any(k in ji for k in ["出行", "伐木"])
+
+      if yi_expand and not ji_expand:
+          return "📈 投放：宜**扩量**，积极拉升预算与出价"
+      elif yi_clean or ji_expand:
+          return "📈 投放：宜**销户**，清理低效计划与账户"
+      elif yi_test or ji_test:
+          return "📈 投放：宜**测新**，稳预算测试新素材与受众"
+      else:
+          return "📈 投放：宜**测新**，稳中求进，观察数据再决策"
+
 def get_almanac():
       today = datetime.now()
       try:
           lunar = LunarDate.fromSolarDate(today.year, today.month, today.day)
+          gz_year = get_ganzhi_year(lunar.year)
           month_name = LUNAR_MONTH_NAMES[lunar.month - 1]
           day_name = LUNAR_DAY_NAMES[lunar.day - 1]
-          lunar_str = f"{lunar.year}年 {month_name}月{day_name}"
+          lunar_str = f"{gz_year}年{month_name}月{day_name}"
 
           idx = (lunar.day - 1) % len(YI_JI_TABLE)
           yi, ji = YI_JI_TABLE[idx]
+          ad_tip = get_ad_tip(yi, ji)
 
           solar_term = SOLAR_TERMS.get((today.month, today.day), "")
 
@@ -86,6 +115,7 @@ def get_almanac():
               "lunarStr": lunar_str,
               "yi": yi,
               "ji": ji,
+              "adTip": ad_tip,
               "solarTerm": solar_term,
           }
       except Exception as e:
@@ -114,7 +144,6 @@ def get_life_tips(w):
       precip = float(w.get("precip", 0))
       scale = int(w.get("windScale", 0))
 
-      # 穿搭建议
       if feels >= 35:
           tips.append("👕 穿搭：背心短裤，轻薄透气为主")
       elif feels >= 28:
@@ -128,7 +157,6 @@ def get_life_tips(w):
       else:
           tips.append("👕 穿搭：羽绒服+厚围巾，注意防寒")
 
-      # 带伞建议
       if precip > 0 or any(k in text for k in ["雨","雷","雪","冻"]):
           tips.append("☂️  带伞：今日有降水，务必携带雨具")
       elif humidity > 85:
@@ -136,7 +164,6 @@ def get_life_tips(w):
       else:
           tips.append("☂️  带伞：无需携带")
 
-      # 防晒建议
       if any(k in text for k in ["晴","少云"]):
           if temp >= 28:
               tips.append("🧴 防晒：紫外线强，涂防晒霜+戴遮阳帽")
@@ -147,11 +174,10 @@ def get_life_tips(w):
       else:
           tips.append("🧴 防晒：无明显紫外线，无需特别防护")
 
-      # 大风提示
+      result = "\n".join(tips)
       if scale >= 6:
-          tips.append(f"🌬️  注意：{w.get('windDir')} {scale}级大风，户外注意安全")
-
-      return "　".join(tips[:3]) + (f"\n{tips[3]}" if len(tips) > 3 else "")
+          result += f"\n🌬️  注意：{w.get('windDir')} {scale}级大风，户外注意安全"
+      return result
 
 def build_card(cities_data, almanac):
       today = datetime.now().strftime("%Y年%m月%d日")
@@ -166,7 +192,8 @@ def build_card(cities_data, almanac):
                   "content": (
                       f"**📅 {today}**　农历 {almanac['lunarStr']}{solar_str}\n"
                       f"✅ **宜**　{almanac['yi']}\n"
-                      f"❌ **忌**　{almanac['ji']}"
+                      f"❌ **忌**　{almanac['ji']}\n"
+                      f"{almanac['adTip']}"
                   )
               }
           })
@@ -191,7 +218,6 @@ def build_card(cities_data, almanac):
                           f"🌤 {w['text']}　🌡 {w['temp']}°C　体感 {w['feelsLike']}°C\n"
                           f"💧 湿度 {w['humidity']}%　👁 能见度 {w['vis']}km\n"
                           f"💨 {w['windDir']} {w['windScale']}级　🔵 气压 {w['pressure']}hPa\n"
-                          f"─\n"
                           f"{life_tips}"
                       )
                   }
@@ -210,7 +236,7 @@ def build_card(cities_data, almanac):
           }
       }
       return card
-  
+
 def send_to_feishu(card):
       try:
           res = requests.post(FEISHU_WEBHOOK, json=card, timeout=10)
@@ -219,8 +245,8 @@ def send_to_feishu(card):
           print(f"飞书推送失败: {e}")
           sys.exit(1)
 
-cities_data = []
-for city in CITIES:
+  cities_data = []
+  for city in CITIES:
       w = get_weather(city["name"], city["id"])
       cities_data.append({"name": city["name"], "weather": w})
 
@@ -228,4 +254,3 @@ almanac = get_almanac()
 card = build_card(cities_data, almanac)
 send_to_feishu(card)
 print("完成")
-
