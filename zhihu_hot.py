@@ -9,16 +9,10 @@ SOURCES = [
       {
           "name": "BBC 中文",
           "url": "http://feeds.bbci.co.uk/zhongwen/simp/rss.xml",
-          "count": 3,
+          "count": 5,
           "icon": "🌐"
       },
-      {
-          "name": "VOA 中文",
-          "url": "https://www.voachinese.com/api/zmpqeomykm",
-          "count": 3,
-          "icon": "📰"
-      },
-  ]
+]
 
 def fetch_rss(url, count):
       headers = {"User-Agent": "Mozilla/5.0 (compatible; NewsBot/1.0)"}
