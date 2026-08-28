@@ -13,8 +13,8 @@ SOURCES = [
           "icon": "🌐"
       },
       {
-          "name": "路透社中文",
-          "url": "https://feeds.reuters.com/reuters/CNTopNews",
+          "name": "VOA 中文",
+          "url": "https://www.voachinese.com/api/zmpqeomykm",
           "count": 3,
           "icon": "📰"
       },
@@ -27,6 +27,22 @@ def fetch_rss(url, count):
           print(f"  状态码: {res.status_code}")
           if res.status_code != 200:
               return []
+  
+          content_type = res.headers.get("Content-Type", "")
+
+          # JSON 格式（VOA）
+          if "json" in content_type:
+              data = res.json()
+              items = data if isinstance(data, list) else data.get("items", [])
+              result = []
+              for item in items[:count]:
+                  title = item.get("title", "").strip()
+                  link = item.get("url", item.get("link", "")).strip()
+                  if title and link:
+                      result.append({"title": title, "url": link})
+              return result
+
+          # XML 格式（BBC 等）
           root = ET.fromstring(res.content)
           channel = root.find("channel")
           if channel is None:
@@ -39,9 +55,11 @@ def fetch_rss(url, count):
               if title and link:
                   result.append({"title": title, "url": link})
           return result
+
       except Exception as e:
           print(f"  请求失败: {e}")
           return []
+
 
 def build_card(all_items):
       now = datetime.utcnow()
