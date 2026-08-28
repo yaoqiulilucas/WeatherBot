@@ -38,7 +38,7 @@ def get_almanac():
       try:
           res = requests.get(url, timeout=10)
           data = res.json()
-          print(f"黄历响应: {data}")
+          print(f"黄历完整响应: {data}")
           if data.get("code") != 1:
               print(f"黄历错误：{data.get('msg')}")
               return None
@@ -53,11 +53,23 @@ def build_card(cities_data, almanac):
 
       # 黄历部分
       if almanac:
-          lunar = f"{almanac.get('lunarYear', '')}年 {almanac.get('lunarMonth', '')}月{almanac.get('lunarDay', '')}"
-          yi = almanac.get("yi", "暂无")
-          ji = almanac.get("ji", "暂无")
-          solar_term = almanac.get("solarTerms", "")
-          solar_str = f"　🌿 节气：{solar_term}" if solar_term else ""
+          print(f"黄历字段列表: {list(almanac.keys())}")
+
+          # 农历日期
+          lunar = almanac.get("lunarCalendar") or \
+                  f"{almanac.get('lunarYear','')} {almanac.get('lunarMonth','')}{almanac.get('lunarDay','')}"
+
+          # 宜忌（兼容多种字段名）
+          day_tips = almanac.get("dayTips") or {}
+          yi = almanac.get("yi") or \
+               almanac.get("suited") or \
+               day_tips.get("good") or "暂无"
+          ji = almanac.get("ji") or \
+               almanac.get("taboo") or \
+               day_tips.get("bad") or "暂无"
+
+          solar_term = almanac.get("solarTerms") or almanac.get("solarTerm") or ""
+          solar_str = f"　🌿 {solar_term}" if solar_term else ""
 
           elements.append({
               "tag": "div",
