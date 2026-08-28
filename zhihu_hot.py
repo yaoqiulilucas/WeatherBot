@@ -1,22 +1,24 @@
 import requests
 import sys
 from datetime import datetime
+import xml.etree.ElementTree as ET
 
 FEISHU_WEBHOOK = "https://open.feishu.cn/open-apis/bot/v2/hook/96ab3d4f-7ddd-4d43-8002-3ef94ca2659d"
 
 def get_zhihu_hot():
-      url = "https://api.vvhan.com/api/hotlist/zhihuHot"
+      url = "https://rsshub.app/zhihu/hotlist"
+      headers = {"User-Agent": "Mozilla/5.0"}
       try:
-          res = requests.get(url, timeout=10)
-          print(f"原始响应: {res.status_code} {res.text[:200]}")
-          data = res.json()
-          items = data.get("data", [])
+          res = requests.get(url, headers=headers, timeout=15)
+          print(f"状态码: {res.status_code}")
+          root = ET.fromstring(res.text)
+          channel = root.find("channel")
+          items = channel.findall("item")
           result = []
           for item in items[:5]:
-              title = item.get("title", "")
-              hot_url = item.get("url", "")
-              hot_val = item.get("hot", "")
-              result.append({"title": title, "url": hot_url, "hot": str(hot_val)})
+              title = item.findtext("title", "").strip()
+              link = item.findtext("link", "").strip()
+              result.append({"title": title, "url": link, "hot": ""})
           return result
       except Exception as e:
           print(f"知乎热榜请求失败: {e}")
@@ -30,8 +32,6 @@ def build_card(items):
       content_lines = []
       for i, item in enumerate(items, 1):
           content_lines.append(f"**{i}. [{item['title']}]({item['url']})**")
-          if item["hot"]:
-              content_lines.append(f"🔥 {item['hot']}")
 
       card = {
           "msg_type": "interactive",
@@ -54,7 +54,7 @@ def build_card(items):
                       "tag": "div",
                       "text": {
                           "tag": "lark_md",
-                          "content": f"📡 数据来源：知乎热榜实时更新"
+                          "content": "📡 数据来源：知乎热榜实时更新"
                       }
                   }
               ]
@@ -78,4 +78,4 @@ if not items:
 card = build_card(items)
 send_to_feishu(card)
 print("完成")
-
+  
