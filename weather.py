@@ -88,13 +88,14 @@ def get_ad_tip(yi, ji):
       ji_test   = any(k in ji for k in ["出行", "伐木"])
 
       if yi_expand and not ji_expand:
-          return "📈 投放：宜**扩量**，积极拉升预算与出价"
+          return "📈 投放　**宜扩量**　将跑量计划预算提升20-30%，出价上调5-10%；重点扩高ROI计划，SP/SD各开1-2条，建议10:00前完成调整，观察至14:00数据"
       elif yi_clean or ji_expand:
-          return "📈 投放：宜**销户**，清理低效计划与账户"
+          return "📈 投放　**宜销户**　关停近7日ACoS超阈值计划，下架零出单超14天的广告组；预算收紧至日常60%，仅保留核心词SP自动投放，避免新开计划"
       elif yi_test or ji_test:
-          return "📈 投放：宜**测新**，稳预算测试新素材与受众"
+          return "📈 投放　**宜测新**　测试1-2支新素材（建议方向：场景化使用/痛点切入），每条日预算50-100元，SP手动精准匹配开1条，9:00上线跑满一天再看数据"
       else:
-          return "📈 投放：宜**测新**，稳中求进，观察数据再决策"
+          return "📈 投放　**宜测新**　稳预算维持现状，可小额测试1条新受众定向，日预算30-50元，不调整现有出价，16:00前观察CTR与加购率再决策"
+
 
 def get_almanac():
       today = datetime.now()
@@ -158,11 +159,11 @@ def get_life_tips(w):
           tips.append("👕 穿搭：羽绒服+厚围巾，注意防寒")
 
       if precip > 0 or any(k in text for k in ["雨","雷","雪","冻"]):
-          tips.append("☂️  带伞：今日有降水，务必携带雨具")
+          tips.append("☂️ 带伞：今日有降水，务必携带雨具")
       elif humidity > 85:
-          tips.append("☂️  带伞：湿度较高，出门备伞以防阵雨")
+          tips.append("☂️ 带伞：湿度较高，出门备伞以防阵雨")
       else:
-          tips.append("☂️  带伞：无需携带")
+          tips.append("☂️ 带伞：无需携带")
 
       if any(k in text for k in ["晴","少云"]):
           if temp >= 28:
