@@ -1,6 +1,7 @@
 import requests
 import sys
-from datetime import datetime
+from datetime import date
+from chinese_calendar import is_workday
 
 FEISHU_WEBHOOK = "https://open.feishu.cn/open-apis/bot/v2/hook/96ab3d4f-7ddd-4d43-8002-3ef94ca2659d"
 
@@ -127,6 +128,10 @@ def send_to_feishu(card):
       except Exception as e:
           print(f"飞书推送失败: {e}")
           sys.exit(1)
+            
+if not is_workday(date.today()):
+      print("今日非工作日，跳过推送")
+      sys.exit(0)
 
 w = get_london_weather()
 if not w:
