@@ -5,22 +5,18 @@ from datetime import datetime
 FEISHU_WEBHOOK = "https://open.feishu.cn/open-apis/bot/v2/hook/96ab3d4f-7ddd-4d43-8002-3ef94ca2659d"
 
 def get_zhihu_hot():
-      url = "https://www.zhihu.com/api/v3/feed/topstory/hot-lists/total?limit=5"
-      headers = {
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Referer": "https://www.zhihu.com/hot",
-      }
+      url = "https://tenapi.cn/v2/zhihu"
       try:
-          res = requests.get(url, headers=headers, timeout=10)
+          res = requests.get(url, timeout=10)
           data = res.json()
+          print(f"知乎热榜响应: {data}")
           items = data.get("data", [])
           result = []
           for item in items[:5]:
-              target = item.get("target", {})
-              title = target.get("title", "")
-              url = f"https://www.zhihu.com/question/{target.get('id', '')}"
-              hot_val = item.get("detail_text", "")
-              result.append({"title": title, "url": url, "hot": hot_val})
+              title = item.get("name", "")
+              hot_url = item.get("url", "")
+              hot_val = item.get("hot", "")
+              result.append({"title": title, "url": hot_url, "hot": str(hot_val)})
           return result
       except Exception as e:
           print(f"知乎热榜请求失败: {e}")
