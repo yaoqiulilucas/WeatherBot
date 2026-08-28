@@ -134,6 +134,27 @@ def get_ad_tip(yi, ji, lunar_day):
           else:
               return "**投放**　观望为主　今日黄历平稳，宜守不宜攻。Meta检查预算消耗进度，预防核心广告组提前断投；Google若精准匹配词消耗偏慢可小幅上调出价3-5%补量；TikTok保持现有投放节奏，不新开计划，不换素材。适合操作的时辰：申时（15:00-17:00）下午流量尚在，小幅调整能在当日收盘前看到效果"
 
+def get_sej_news():
+      url = "https://www.searchenginejournal.com/feed/"
+      headers = {"User-Agent": "Mozilla/5.0 (compatible; NewsBot/1.0)"}
+      try:
+          res = requests.get(url, headers=headers, timeout=15)
+          import xml.etree.ElementTree as ET
+          root = ET.fromstring(res.content)
+          channel = root.find("channel")
+          items = channel.findall("item")
+          result = []
+          for item in items[:3]:
+              title = item.findtext("title", "").strip()
+              link = item.findtext("link", "").strip()
+              if title and link:
+                  result.append({"title": title, "url": link})
+          print(f"SEJ 获取到 {len(result)} 条")
+          return result
+      except Exception as e:
+          print(f"SEJ 获取失败: {e}")
+          return []
+
 def get_almanac():
       today = datetime.now()
       try:
@@ -217,7 +238,8 @@ def get_life_tips(w):
           result += f"\n🌬️  注意：{w.get('windDir')} {scale}级大风，户外注意安全"
       return result
 
-def build_card(cities_data, almanac):
+
+def build_card(cities_data, almanac, sej_news):
       today = datetime.now().strftime("%Y年%m月%d日")
       elements = []
 
@@ -262,6 +284,16 @@ def build_card(cities_data, almanac):
               })
           elements.append({"tag": "hr"})
 
+      if sej_news:
+          lines = ["📢 **Search Engine Journal 今日速览**"]
+          for i, item in enumerate(sej_news, 1):
+              lines.append(f"**{i}. [{item['title']}]({item['url']})**")
+          elements.append({
+              "tag": "div",
+              "text": {"tag": "lark_md", "content": "\n".join(lines)}
+          })
+          elements.append({"tag": "hr"})
+
       card = {
           "msg_type": "interactive",
           "card": {
@@ -289,6 +321,7 @@ for city in CITIES:
       cities_data.append({"name": city["name"], "weather": w})
 
 almanac = get_almanac()
-card = build_card(cities_data, almanac)
+sej_news = get_sej_news()
+card = build_card(cities_data, almanac, sej_news)
 send_to_feishu(card)
 print("完成")
