@@ -1,18 +1,17 @@
 name: London Weather
-  
+
 on:
     schedule:
-      - cron: '5 7 * * *'
+      - cron: '12 7 * * 1-5'
     workflow_dispatch:
-    
+
 jobs:
     push-london:
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v4
         - uses: actions/setup-python@v5
-          with: 
+          with:
             python-version: '3.11'
         - run: pip install requests chinesecalendar
         - run: python london_weather.py
-        
