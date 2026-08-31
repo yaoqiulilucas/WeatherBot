@@ -1,8 +1,6 @@
 name: Evening Greeting
   
 on:
-    schedule:
-      - cron: '06 11 * * 1-5'
     workflow_dispatch:
 
 jobs:
