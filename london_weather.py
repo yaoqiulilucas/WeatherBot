@@ -1,6 +1,6 @@
 import requests
 import sys
-from datetime import date
+from datetime import datetime, date
 from chinese_calendar import is_workday
 
 FEISHU_WEBHOOK = "https://open.feishu.cn/open-apis/bot/v2/hook/96ab3d4f-7ddd-4d43-8002-3ef94ca2659d"
