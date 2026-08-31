@@ -1,6 +1,6 @@
 import requests
 import sys
-from datetime import date
+from datetime import datetime, date
 from chinese_calendar import is_workday
 import xml.etree.ElementTree as ET
 
