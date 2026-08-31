@@ -1,7 +1,7 @@
 import requests
 import os
 import sys
-from datetime import date
+from datetime import datetime, date
 from chinese_calendar import is_workday
 from lunardate import LunarDate
 
