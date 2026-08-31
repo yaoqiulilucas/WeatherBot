@@ -1,9 +1,7 @@
 name: London Weather
 
 on:
-    schedule:
-      - cron: '07 7 * * 1-5'
-    workflow_dispatch:
+   workflow_dispatch:
 
 jobs:
     push-london:
