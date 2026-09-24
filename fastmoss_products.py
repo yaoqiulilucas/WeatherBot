@@ -1,3 +1,4 @@
+import os
 import json
 import urllib.request
 import urllib.error
@@ -5,18 +6,15 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 
-# 请替换为重新生成的密钥和 Webhook，不要使用之前已暴露的旧值
-FASTMOSS_API_KEY = "fedicijsqdtlqcirmvdvpiqzfylmdcso"
-FEISHU_WEBHOOK_URL = "https://open.feishu.cn/open-apis/bot/v2/hook/96ab3d4f-7ddd-4d43-8002-3ef94ca2659d"
+FASTMOSS_API_KEY = os.environ["fedicijsqdtlqcirmvdvpiqzfylmdcso"]
+FEISHU_WEBHOOK_URL = os.environ["https://open.feishu.cn/open-apis/bot/v2/hook/96ab3d4f-7ddd-4d43-8002-3ef94ca2659d"]
 
-# 市场：美国 US、英国 GB、德国 DE、法国 FR、墨西哥 MX 等
-REGION = "US"
+REGION = os.getenv("REGION") or "US"
 
-# 留空代表全部类目；如果有 FastMoss 类目 ID，可填写数字
-CATEGORY_ID = None
+category_value = os.getenv("CATEGORY_ID", "").strip()
+CATEGORY_ID = int(category_value) if category_value else None
 
-# 每个榜单展示数量
-PAGE_SIZE = 10
+PAGE_SIZE = int(os.getenv("PAGE_SIZE") or "10")
 
 
 def china_date(days_ago=0):
@@ -230,11 +228,7 @@ def send_to_feishu(message):
 
 
 def main():
-    if "填写新的" in FASTMOSS_API_KEY:
-        raise RuntimeError("请先填写新的 FastMoss API Key")
 
-    if "填写新的" in FEISHU_WEBHOOK_URL:
-        raise RuntimeError("请先填写新的飞书 Webhook")
 
     print("正在获取 FastMoss 数据……")
 
