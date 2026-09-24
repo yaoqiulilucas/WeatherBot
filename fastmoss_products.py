@@ -152,6 +152,27 @@ def product_id(item):
 
     return value or "-"
 
+def product_link(item):
+    # 如果接口直接返回 FastMoss 链接，优先使用
+    direct_url = item.get("fastmoss_url")
+
+    if not direct_url and isinstance(item.get("product"), dict):
+        direct_url = item["product"].get("fastmoss_url")
+
+    if direct_url:
+        return direct_url
+
+    # 排行榜接口通常只返回 product_id，因此自行生成 FastMoss 详情链接
+    current_product_id = product_id(item)
+
+    if current_product_id == "-":
+        return ""
+
+    return (
+        "https://www.fastmoss.com/zh/e-commerce/detail/"
+        f"{current_product_id}"
+    )
+
 
 def format_products(products, report_type):
     if not products:
@@ -182,10 +203,13 @@ def format_products(products, report_type):
             if item.get("growth_rate") is not None:
                 metrics += f"｜增长率：{item['growth_rate']}%"
 
+        link = product_link(item)
+
         lines.append(
-            f"{index}. {product_title(item)}\n"
-            f"   {metrics}\n"
-            f"   商品ID：{product_id(item)}"
+           f"{index}. {product_title(item)}\n"
+           f"   {metrics}\n"
+           f"   商品ID：{product_id(item)}\n"
+           f"   🔗 商品详情：{link}"
         )
 
     return "\n".join(lines)
