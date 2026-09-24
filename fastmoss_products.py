@@ -396,22 +396,21 @@ def send_to_feishu(card):
 
 
 def main():
-
-
     print("正在获取 FastMoss 数据……")
 
     top_selling = get_top_selling()
     new_products = get_new_products()
     most_promoted = get_most_promoted()
 
-   card = build_report_card(
-    top_selling=top_selling,
-    new_products=new_products,
-    most_promoted=most_promoted,
-   )
+    card = build_report_card(
+        top_selling=top_selling,
+        new_products=new_products,
+        most_promoted=most_promoted,
+    )
 
-send_to_feishu(card)
-print("FastMoss 飞书趋势卡片推送成功")
+    send_to_feishu(card)
+
+    print("FastMoss 飞书趋势卡片推送成功")
 
 if __name__ == "__main__":
     try:
