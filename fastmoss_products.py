@@ -14,7 +14,7 @@ REGION = os.getenv("REGION") or "US"
 category_value = os.getenv("CATEGORY_ID", "").strip()
 CATEGORY_ID = int(category_value) if category_value else None
 
-PAGE_SIZE = int(os.getenv("PAGE_SIZE") or "10")
+PAGE_SIZE = int(os.getenv("PAGE_SIZE") or "5")
 
 
 def china_date(days_ago=0):
@@ -176,51 +176,166 @@ def product_link(item):
 
 def format_products(products, report_type):
     if not products:
-        return "暂无数据"
+        return "暂无符合条件的商品"
 
     lines = []
 
-    for index, item in enumerate(products, start=1):
+    for index, item in enumerate(products[:5], start=1):
+        title = product_title(item)
+        link = product_link(item)
         currency = item.get("currency", "")
 
         if report_type == "new":
             metrics = (
-                f"3日销量：{number(item.get('day3_units_sold'))}｜"
-                f"3日GMV：{currency} {number(item.get('day3_gmv'))}"
+                f"销量 **{number(item.get('day3_units_sold'))}** · "
+                f"GMV **{currency} "
+                f"{number(item.get('day3_gmv'))}**"
             )
+
         elif report_type == "promoted":
             metrics = (
-                f"销量：{number(item.get('units_sold'))}｜"
-                f"GMV：{currency} {number(item.get('gmv'))}｜"
-                f"关联达人：{number(item.get('affiliate_count'))}"
+                f"销量 **{number(item.get('units_sold'))}** · "
+                f"GMV **{currency} "
+                f"{number(item.get('gmv'))}** · "
+                f"达人 **{number(item.get('affiliate_count'))}**"
             )
+
         else:
             metrics = (
-                f"销量：{number(item.get('units_sold'))}｜"
-                f"GMV：{currency} {number(item.get('gmv'))}"
+                f"销量 **{number(item.get('units_sold'))}** · "
+                f"GMV **{currency} "
+                f"{number(item.get('gmv'))}**"
             )
 
             if item.get("growth_rate") is not None:
-                metrics += f"｜增长率：{item['growth_rate']}%"
+                metrics += (
+                    f" · 增长 **{item['growth_rate']}%**"
+                )
 
-        link = product_link(item)
+        if link:
+            link_text = f"[🔗 查看商品详情]({link})"
+        else:
+            link_text = "暂无商品链接"
 
         lines.append(
-           f"{index}. {product_title(item)}\n"
-           f"   {metrics}\n"
-           f"   商品ID：{product_id(item)}\n"
-           f"   🔗 商品详情：{link}"
+            f"**{index}. {title}**\n"
+            f"{metrics}\n"
+            f"{link_text}"
         )
 
-    return "\n".join(lines)
+    return "\n\n".join(lines)
 
+def build_report_card(
+    top_selling,
+    new_products,
+    most_promoted,
+):
+    category_text = (
+        f"类目 {CATEGORY_ID}"
+        if CATEGORY_ID is not None
+        else "全部类目"
+    )
 
-def send_to_feishu(message):
-    payload = {
-        "msg_type": "text",
-        "content": {
-            "text": message,
+    return {
+        "config": {
+            "wide_screen_mode": True,
+            "enable_forward": True,
         },
+        "header": {
+            "template": "blue",
+            "title": {
+                "tag": "plain_text",
+                "content": "📊 FastMoss 跨境产品趋势日报",
+            },
+            "subtitle": {
+                "tag": "plain_text",
+                "content": f"{REGION} 市场 · {category_text}",
+            },
+        },
+        "elements": [
+            {
+                "tag": "div",
+                "text": {
+                    "tag": "lark_md",
+                    "content": (
+                        f"📅 **数据日期：** {china_date()}\n"
+                        f"🌎 **目标市场：** {REGION}\n"
+                        f"📦 **商品范围：** 跨境商品"
+                    ),
+                },
+            },
+            {
+                "tag": "hr",
+            },
+            {
+                "tag": "div",
+                "text": {
+                    "tag": "lark_md",
+                    "content": (
+                        "🔥 **GMV 热销榜 TOP 5**\n\n"
+                        + format_products(
+                            top_selling,
+                            "selling",
+                        )
+                    ),
+                },
+            },
+            {
+                "tag": "hr",
+            },
+            {
+                "tag": "div",
+                "text": {
+                    "tag": "lark_md",
+                    "content": (
+                        "🌱 **三日潜力新品 TOP 5**\n\n"
+                        + format_products(
+                            new_products,
+                            "new",
+                        )
+                    ),
+                },
+            },
+            {
+                "tag": "hr",
+            },
+            {
+                "tag": "div",
+                "text": {
+                    "tag": "lark_md",
+                    "content": (
+                        "📣 **达人推广增长榜 TOP 5**\n\n"
+                        + format_products(
+                            most_promoted,
+                            "promoted",
+                        )
+                    ),
+                },
+            },
+            {
+                "tag": "hr",
+            },
+            {
+                "tag": "note",
+                "elements": [
+                    {
+                        "tag": "plain_text",
+                        "content": (
+                            "数据来源：FastMoss OpenAPI｜"
+                            "榜单仅用于发现趋势，请结合利润、"
+                            "物流和合规风险进行判断。"
+                        ),
+                    }
+                ],
+            },
+        ],
+    }
+
+
+def send_to_feishu(card):
+    payload = {
+        "msg_type": "interactive",
+        "card": card,
     }
 
     request = urllib.request.Request(
@@ -231,6 +346,35 @@ def send_to_feishu(message):
             "Content-Type": "application/json",
         },
     )
+
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            result = json.loads(response.read().decode("utf-8"))
+
+    except urllib.error.HTTPError as error:
+        response_text = error.read().decode(
+            "utf-8",
+            errors="replace",
+        )
+        raise RuntimeError(
+            f"飞书 HTTP {error.code}: {response_text}"
+        ) from error
+
+    except urllib.error.URLError as error:
+        raise RuntimeError(
+            f"无法连接飞书：{error}"
+        ) from error
+
+    code = result.get(
+        "code",
+        result.get("StatusCode", 0),
+    )
+
+    if code != 0:
+        raise RuntimeError(
+            "飞书推送失败："
+            + json.dumps(result, ensure_ascii=False)
+        )
 
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
@@ -260,30 +404,14 @@ def main():
     new_products = get_new_products()
     most_promoted = get_most_promoted()
 
-    report = "\n".join(
-        [
-            "📊 FastMoss 跨境产品趋势报告",
-            f"日期：{china_date()}",
-            f"市场：{REGION}",
-            "",
-            "🔥 GMV 热销商品榜",
-            format_products(top_selling, "selling"),
-            "",
-            "🌱 三日潜力新品榜",
-            format_products(new_products, "new"),
-            "",
-            "📣 达人推广商品榜",
-            format_products(most_promoted, "promoted"),
-            "",
-            "提示：请结合采购成本、物流费用、利润和合规风险进行判断。",
-            "数据来源：FastMoss OpenAPI",
-        ]
-    )
+   card = build_report_card(
+    top_selling=top_selling,
+    new_products=new_products,
+    most_promoted=most_promoted,
+   )
 
-    # 防止消息过长
-    send_to_feishu(report[:19000])
-    print("飞书推送成功")
-
+send_to_feishu(card)
+print("FastMoss 飞书趋势卡片推送成功")
 
 if __name__ == "__main__":
     try:
