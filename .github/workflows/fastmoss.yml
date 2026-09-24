@@ -1,13 +1,7 @@
 name: FastMoss 飞书产品趋势推送
 
 on:
-  # 支持在 GitHub Actions 页面手动运行
   workflow_dispatch:
-
-  # 每天北京时间上午 9 点运行
-  # GitHub Cron 默认使用 UTC，UTC 01:00 = 北京时间 09:00
-  schedule:
-    - cron: "0 1 * * *"
 
 permissions:
   contents: read
