@@ -6,8 +6,8 @@ from zoneinfo import ZoneInfo
 
 
 # 请替换为重新生成的密钥和 Webhook，不要使用之前已暴露的旧值
-FASTMOSS_API_KEY = "填写新的_FASTMOSS_API_KEY"
-FEISHU_WEBHOOK_URL = "填写新的_飞书_WEBHOOK"
+FASTMOSS_API_KEY = "fedicijsqdtlqcirmvdvpiqzfylmdcso"
+FEISHU_WEBHOOK_URL = "https://open.feishu.cn/open-apis/bot/v2/hook/96ab3d4f-7ddd-4d43-8002-3ef94ca2659d"
 
 # 市场：美国 US、英国 GB、德国 DE、法国 FR、墨西哥 MX 等
 REGION = "US"
