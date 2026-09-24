@@ -1,0 +1,38 @@
+name: FastMoss 飞书产品趋势推送
+
+on:
+  # 支持在 GitHub Actions 页面手动运行
+  workflow_dispatch:
+
+  # 每天北京时间上午 9 点运行
+  # GitHub Cron 默认使用 UTC，UTC 01:00 = 北京时间 09:00
+  schedule:
+    - cron: "0 1 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  send-fastmoss-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 获取仓库代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 运行 FastMoss 推送
+        env:
+          FASTMOSS_API_KEY: ${{ secrets.FASTMOSS_API_KEY }}
+          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+
+          REGION: ${{ vars.REGION }}
+          CATEGORY_ID: ${{ vars.CATEGORY_ID }}
+          PAGE_SIZE: ${{ vars.PAGE_SIZE }}
+
+        run: python fastmoss_products.py
