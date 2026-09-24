@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 
-FASTMOSS_API_KEY = os.environ["fedicijsqdtlqcirmvdvpiqzfylmdcso"]
+FASTMOSS_API_KEY = os.environ["FASTMOSS_API_KEY"]
 FEISHU_WEBHOOK_URL = os.environ["https://open.feishu.cn/open-apis/bot/v2/hook/96ab3d4f-7ddd-4d43-8002-3ef94ca2659d"]
 
 REGION = os.getenv("REGION") or "US"
