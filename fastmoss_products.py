@@ -174,13 +174,13 @@ def product_link(item):
     )
 
 
-def format_products(products, report_type):
+def format_products(products, report_type, start_number=1):
     if not products:
         return "暂无符合条件的商品"
 
     lines = []
 
-    for index, item in enumerate(products[:5], start=1):
+    for index, item in enumerate(products[:5], start=start_number):
         title = product_title(item)
         link = product_link(item)
         currency = item.get("currency", "")
@@ -225,21 +225,92 @@ def format_products(products, report_type):
 
     return "\n\n".join(lines)
 
-def build_report_card(
-    top_selling,
-    new_products,
-    most_promoted,
-):
+def build_report_card(top_selling, new_products, most_promoted):
     category_text = (
         f"类目 {CATEGORY_ID}"
         if CATEGORY_ID is not None
         else "全部类目"
     )
 
+    def markdown(content):
+        return {
+            "tag": "markdown",
+            "content": content,
+        }
+
+    def ranking_section(title, products, report_type):
+        first = products[:1]
+        remaining = products[1:5]
+
+        elements = [
+            markdown(f"### {title}"),
+            markdown(format_products(first, report_type)),
+        ]
+
+        if remaining:
+            elements.append({
+                "tag": "collapsible_panel",
+                "expanded": False,
+                "header": {
+                    "title": {
+                        "tag": "plain_text",
+                        "content": f"展开查看第 2～{len(products[:5])} 名",
+                    },
+                },
+                "elements": [
+                    markdown(
+                        format_products(
+                            remaining,
+                            report_type,
+                            start_number=2,
+                        )
+                    ),
+                ],
+            })
+
+        return elements
+
+    elements = [
+        markdown(
+            f"📅 **{china_date()}**　"
+            f"🌎 **{REGION} 市场**　"
+            f"📦 **{category_text}**"
+        ),
+        {"tag": "hr"},
+    ]
+
+    elements += ranking_section(
+        "🔥 GMV 热销榜 TOP 5",
+        top_selling,
+        "selling",
+    )
+    elements.append({"tag": "hr"})
+
+    elements += ranking_section(
+        "🌱 三日潜力新品 TOP 5",
+        new_products,
+        "new",
+    )
+    elements.append({"tag": "hr"})
+
+    elements += ranking_section(
+        "📣 达人推广榜 TOP 5",
+        most_promoted,
+        "promoted",
+    )
+
+    elements += [
+        {"tag": "hr"},
+        markdown(
+            "数据来源：FastMoss OpenAPI｜"
+            "选品前请核算利润、物流和合规风险。"
+        ),
+    ]
+
     return {
+        "schema": "2.0",
         "config": {
             "wide_screen_mode": True,
-            "enable_forward": True,
         },
         "header": {
             "template": "blue",
@@ -247,88 +318,10 @@ def build_report_card(
                 "tag": "plain_text",
                 "content": "📊 FastMoss 跨境产品趋势日报",
             },
-            "subtitle": {
-                "tag": "plain_text",
-                "content": f"{REGION} 市场 · {category_text}",
-            },
         },
-        "elements": [
-            {
-                "tag": "div",
-                "text": {
-                    "tag": "lark_md",
-                    "content": (
-                        f"📅 **数据日期：** {china_date()}\n"
-                        f"🌎 **目标市场：** {REGION}\n"
-                        f"📦 **商品范围：** 跨境商品"
-                    ),
-                },
-            },
-            {
-                "tag": "hr",
-            },
-            {
-                "tag": "div",
-                "text": {
-                    "tag": "lark_md",
-                    "content": (
-                        "🔥 **GMV 热销榜 TOP 5**\n\n"
-                        + format_products(
-                            top_selling,
-                            "selling",
-                        )
-                    ),
-                },
-            },
-            {
-                "tag": "hr",
-            },
-            {
-                "tag": "div",
-                "text": {
-                    "tag": "lark_md",
-                    "content": (
-                        "🌱 **三日潜力新品 TOP 5**\n\n"
-                        + format_products(
-                            new_products,
-                            "new",
-                        )
-                    ),
-                },
-            },
-            {
-                "tag": "hr",
-            },
-            {
-                "tag": "div",
-                "text": {
-                    "tag": "lark_md",
-                    "content": (
-                        "📣 **达人推广增长榜 TOP 5**\n\n"
-                        + format_products(
-                            most_promoted,
-                            "promoted",
-                        )
-                    ),
-                },
-            },
-            {
-                "tag": "hr",
-            },
-            {
-                "tag": "note",
-                "elements": [
-                    {
-                        "tag": "plain_text",
-                        "content": (
-                            "数据来源：FastMoss OpenAPI｜"
-                            "榜单仅用于发现趋势，请结合利润、"
-                            "物流和合规风险进行判断。"
-                        ),
-                    }
-                ],
-            },
-        ],
+        "body": {
+            "elements": elements,
+        },
     }
 
 
