@@ -4,7 +4,7 @@ import urllib.request
 import urllib.error
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
-
+from chinese_calendar import is_workday
 
 FASTMOSS_API_KEY = os.environ["FASTMOSS_API_KEY"]
 FEISHU_WEBHOOK_URL = os.environ["FEISHU_WEBHOOK_URL"]
@@ -342,39 +342,8 @@ def send_to_feishu(card):
         FEISHU_WEBHOOK_URL,
         data=json.dumps(payload).encode("utf-8"),
         method="POST",
-        headers={
-            "Content-Type": "application/json",
-        },
+        headers={"Content-Type": "application/json"},
     )
-
-    try:
-        with urllib.request.urlopen(request, timeout=30) as response:
-            result = json.loads(response.read().decode("utf-8"))
-
-    except urllib.error.HTTPError as error:
-        response_text = error.read().decode(
-            "utf-8",
-            errors="replace",
-        )
-        raise RuntimeError(
-            f"飞书 HTTP {error.code}: {response_text}"
-        ) from error
-
-    except urllib.error.URLError as error:
-        raise RuntimeError(
-            f"无法连接飞书：{error}"
-        ) from error
-
-    code = result.get(
-        "code",
-        result.get("StatusCode", 0),
-    )
-
-    if code != 0:
-        raise RuntimeError(
-            "飞书推送失败："
-            + json.dumps(result, ensure_ascii=False)
-        )
 
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
@@ -388,7 +357,6 @@ def send_to_feishu(card):
         raise RuntimeError(f"无法连接飞书：{error}") from error
 
     code = result.get("code", result.get("StatusCode", 0))
-
     if code != 0:
         raise RuntimeError(
             f"飞书推送失败：{json.dumps(result, ensure_ascii=False)}"
@@ -413,8 +381,13 @@ def main():
     print("FastMoss 飞书趋势卡片推送成功")
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as error:
-        print(f"运行失败：{error}")
-        raise
+    today_cn = datetime.now(ZoneInfo("Asia/Shanghai")).date()
+
+    if not is_workday(today_cn):
+        print(f"{today_cn} 非中国工作日，跳过 FastMoss 推送")
+    else:
+        try:
+            main()
+        except Exception as error:
+            print(f"运行失败：{error}")
+            raise
