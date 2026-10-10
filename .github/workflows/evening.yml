@@ -12,4 +12,8 @@ jobs:
           with:
             python-version: '3.11'
         - run: pip install requests chinesecalendar
+        - name: 发送下班卡片
+          env:
+            TIANAPI_KEY: ${{ secrets.TIANAPI_KEY }}
+          run: python evening.py
         - run: python evening.py
