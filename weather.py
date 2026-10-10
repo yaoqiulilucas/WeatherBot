@@ -1,11 +1,14 @@
 import requests
 import os
 import sys
+import xml.etree.ElementTree as ET
+
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from chinese_calendar import is_workday
 from lunardate import LunarDate
-
+from email.utils import parsedate_to_datetime
+from urllib.parse import quote
 
 API_KEY = os.environ.get("QWEATHER_KEY")
 if not API_KEY:
@@ -140,31 +143,96 @@ def get_ad_tip(yi, ji, lunar_day):
             return "**投放**　观望为主　今日黄历平稳，宜守不宜攻。Meta检查预算消耗进度，预防核心广告组提前断投；Google若精准匹配词消耗偏慢可小幅上调出价3-5%补量；TikTok保持现有投放节奏，不新开计划，不换素材。适合操作的时辰：申时（15:00-17:00）下午流量尚在，小幅调整能在当日收盘前看到效果"
 
 
-def get_sej_news():
-    url = "https://www.searchenginejournal.com/feed/"
-    headers = {"User-Agent": "Mozilla/5.0 (compatible; NewsBot/1.0)"}
+def get_ad_news():
+    """获取北京时间当天的投放运营资讯，最多返回 3 条。"""
+    today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
 
-    try:
-        res = requests.get(url, headers=headers, timeout=15)
-        import xml.etree.ElementTree as ET
+    sources = (
+        "site:cifnews.com OR site:ebrun.com OR "
+        "site:amz123.com OR site:yfchuhai.com"
+    )
+    markets = (
+        "美国 OR 美区 OR 韩国 OR 英国 OR 欧洲 OR 欧盟 "
+        "OR Germany OR UK OR US"
+    )
+    topics = [
+        "TikTok OR TikTok Shop",
+        "Google Ads OR 谷歌广告",
+        "Meta OR Facebook Ads OR Instagram Ads",
+    ]
 
-        root = ET.fromstring(res.content)
-        channel = root.find("channel")
-        items = channel.findall("item")
+    articles = []
+    seen_titles = set()
 
-        result = []
-        for item in items[:3]:
-            title = item.findtext("title", "").strip()
-            link = item.findtext("link", "").strip()
-            if title and link:
-                result.append({"title": title, "url": link})
+    for topic in topics:
+        query = (
+            f"({topic}) "
+            f"(广告 OR 投放 OR 运营 OR 店铺 OR GMV Max OR AI Max) "
+            f"({markets}) "
+            f"({sources}) when:1d"
+        )
+        url = (
+            "https://news.google.com/rss/search"
+            f"?q={quote(query)}&hl=zh-CN&gl=CN&ceid=CN:zh-Hans"
+        )
 
-        print(f"SEJ 获取到 {len(result)} 条")
-        return result
+        try:
+            response = requests.get(
+                url,
+                headers={"User-Agent": "Mozilla/5.0"},
+                timeout=15,
+            )
+            response.raise_for_status()
+            root = ET.fromstring(response.content)
 
-    except Exception as e:
-        print(f"SEJ 获取失败: {e}")
-        return []
+            for item in root.findall("./channel/item"):
+                raw_title = (item.findtext("title") or "").strip()
+                link = (item.findtext("link") or "").strip()
+                published = (item.findtext("pubDate") or "").strip()
+
+                if not raw_title or not link or not published:
+                    continue
+
+                try:
+                    published_at = parsedate_to_datetime(
+                        published
+                    ).astimezone(ZoneInfo("Asia/Shanghai"))
+                except (TypeError, ValueError):
+                    continue
+
+                # 只展示北京时间今天发布的文章
+                if published_at.date() != today:
+                    continue
+
+                source = (item.findtext("source") or "").strip()
+                title = raw_title
+
+                # Google News 标题常在末尾附加“ - 媒体名”
+                if source and title.endswith(f" - {source}"):
+                    title = title[: -(len(source) + 3)].strip()
+
+                key = title.casefold()
+                if key in seen_titles:
+                    continue
+
+                seen_titles.add(key)
+                articles.append({
+                    "title": title,
+                    "url": link,
+                    "source": source or "行业媒体",
+                    "published_at": published_at,
+                })
+
+        except Exception as error:
+            print(f"投放运营资讯获取失败：{error}")
+            continue
+
+    # 按发布时间选最新三条；不是阅读量/热度排行榜
+    articles.sort(
+        key=lambda article: article["published_at"],
+        reverse=True,
+    )
+    return articles[:3]
 
 
 def get_almanac():
@@ -301,7 +369,7 @@ def weather_column(city):
     }
 
 
-def build_card(cities_data, almanac, sej_news):
+def build_card(cities_data, almanac, ad_news):
     today = datetime.now(ZoneInfo("Asia/Shanghai")).strftime("%Y年%m月%d日")
     elements = []
 
@@ -336,38 +404,24 @@ def build_card(cities_data, almanac, sej_news):
     })
     elements.append({"tag": "hr"})
 
-    if sej_news:
-        lines = ["📢 **Search Engine Journal 今日速览**"]
+    if ad_news:
+       lines = ["📡 **投放运营雷达**"]
 
-        for i, item in enumerate(sej_news, 1):
-            lines.append(f"**{i}. [{item['title']}]({item['url']})**")
+        for index, article in enumerate(ad_news, 1):
+            time_text = article["published_at"].strftime("%H:%M")
+            lines.append(
+                f"{index}. [{article['title']}]({article['url']})\n"
+                f"   {article['source']} · 今日 {time_text}"
+            )
 
         elements.append({
             "tag": "div",
             "text": {
                 "tag": "lark_md",
-                "content": "\n".join(lines),
+                "content": "\n\n".join(lines),
             },
         })
         elements.append({"tag": "hr"})
-
-    return {
-        "msg_type": "interactive",
-        "card": {
-            "config": {
-                "wide_screen_mode": True,
-            },
-            "header": {
-                "title": {
-                    "tag": "plain_text",
-                    "content": "🌈 每日天气 & 黄历播报",
-                },
-                "template": "blue",
-            },
-            "elements": elements,
-        },
-    }
-
 
 def send_to_feishu(card):
     try:
@@ -392,7 +446,7 @@ for city in CITIES:
     })
 
 almanac = get_almanac()
-sej_news = get_sej_news()
-card = build_card(cities_data, almanac, sej_news)
+ad_news = get_ad_news()
+card = build_card(cities_data, almanac, ad_news)
 send_to_feishu(card)
 print("完成")
