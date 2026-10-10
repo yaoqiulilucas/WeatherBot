@@ -127,10 +127,7 @@ def get_almanac():
         )
 
         month = lunar.lunarMonthCn.rstrip("大小")
-        lunar_str = (
-            f"{lunar.lunarYear}年（{lunar.year8Char}年）"
-            f"{month}{lunar.lunarDayCn}"
-        )
+        lunar_str = f"{lunar.year8Char}年{month}{lunar.lunarDayCn}"
 
         solar_term = (
             lunar.todaySolarTerms
