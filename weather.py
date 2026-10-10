@@ -402,16 +402,16 @@ def build_card(cities_data, almanac, ad_news):
             for city in cities_data
         ],
     })
-    elements.append({"tag": "hr"})
 
     if ad_news:
-       lines = ["📡 **投放运营雷达**"]
+        elements.append({"tag": "hr"})
+        lines = ["📡 **投放运营雷达**"]
 
         for index, article in enumerate(ad_news, 1):
             time_text = article["published_at"].strftime("%H:%M")
             lines.append(
                 f"{index}. [{article['title']}]({article['url']})\n"
-                f"   {article['source']} · 今日 {time_text}"
+                f"{article['source']} · 今日 {time_text}"
             )
 
         elements.append({
@@ -421,7 +421,21 @@ def build_card(cities_data, almanac, ad_news):
                 "content": "\n\n".join(lines),
             },
         })
-        elements.append({"tag": "hr"})
+
+    return {
+        "msg_type": "interactive",
+        "card": {
+            "config": {"wide_screen_mode": True},
+            "header": {
+                "title": {
+                    "tag": "plain_text",
+                    "content": "🌈 每日天气 & 黄历播报",
+                },
+                "template": "blue",
+            },
+            "elements": elements,
+        },
+    }
 
 def send_to_feishu(card):
     try:
