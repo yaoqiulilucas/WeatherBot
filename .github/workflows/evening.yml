@@ -16,4 +16,3 @@ jobs:
           env:
             TIANAPI_KEY: ${{ secrets.TIANAPI_KEY }}
           run: python evening.py
-        - run: python evening.py
