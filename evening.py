@@ -1,4 +1,4 @@
-import os
+import random
 import sys
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -11,85 +11,290 @@ FEISHU_WEBHOOK = (
     "https://open.feishu.cn/open-apis/bot/v2/hook/"
     "96ab3d4f-7ddd-4d43-8002-3ef94ca2659d"
 )
-TIANAPI_KEY = os.environ.get("TIANAPI_KEY")
 
-FALLBACK_MESSAGES = [
-    "今天辛苦了。工作是生活的一部分，但不是全部，今晚好好休息。",
-    "今天的事先告一段落，明天的烦恼明天再说。先好好吃顿饭。",
-    "数据、素材和账户都先放一放，今天的你已经很努力了。",
-    "不管今天顺不顺，能坚持到下班就值得给自己一点掌声。",
-    "工作可以明天继续，今晚的时间先留给自己。",
+
+TITLES = [
+    "🌆 下班啦，今天辛苦了",
+    "📊 报表先收好，晚饭安排上",
+    "🎬 素材有下一版，今晚先下班",
+    "🛋️ 今日投放人，准备休息",
+    "🌙 今晚，把注意力留给自己",
+    "🍜 数据看了一天，晚饭吃什么",
+    "🎯 今天的下一个目标：回家",
+    "🔋 投放人，也需要充电",
+    "💼 交接完毕，生活上线",
+    "🌃 收工，去看看真实世界",
+    "🎧 今天的下一次点击：播放音乐",
+    "✨ 今天的努力，值得被看见",
+    "🏡 今日下一站：平安到家",
+    "☕ 看了一天后台，歇一歇吧",
+    "🍵 指标先放下，肩膀松一松",
+    "🎉 收工，切换生活频道",
+    "📈 曲线之外，也有好风景",
+    "🧸 今天也关心一下自己",
+    "🛎️ 下班提醒：晚饭正在等你",
+    "🎮 工作模式，退出成功",
+    "🌇 广告人，也要有自己的傍晚",
+    "📦 今日工作，收个好尾",
+    "🍲 先交接，再吃饭",
+    "🌿 今天辛苦，今晚轻松",
+    "🕯️ 屏幕之外，也有温柔的光",
+    "🚶 收工，去走一段自己的路",
+    "💬 文案写够了，聊点生活吧",
+    "🎨 创意下班，生活接棒",
+    "🌌 今晚不必事事量化",
+    "🪴 把自己也照顾好",
+    "🌍 看过世界市场，也看看晚霞",
+    "💫 今天的你，值得一个赞",
+    "🍚 下班后的重点项目：晚饭",
+    "🎵 今日轻松时段，开始",
+    "📚 工作翻篇，生活继续",
+    "🛁 结束忙碌，慢慢放松",
+    "🎈 今天的快乐，不设 KPI",
+    "🏠 回家，是今晚的好方向",
+    "🌙 今日忙碌，到这里就好",
+    "🥳 收工啦，投放小分队",
 ]
+
+
+MESSAGES = [
+    # 01—10：投放人的下班日常
+    "今天追了一天指标，晚上追一集喜欢的剧也挺好。",
+    "白天为转化绞尽脑汁，晚上只想把食材转化成一顿好饭。",
+    "今天看够后台了，回家看看窗外。",
+    "账户需要认真照看，你也值得被好好照顾。",
+    "报表里有很多数字，今晚的快乐可以不量化。",
+    "今天的预算分配做了不少，晚上记得给自己分一点时间。",
+    "必要检查和交接完成后，给今天的工作画个句号。",
+    "白天忙着找增长点，晚上找一家好吃的小店。",
+    "今天的最后一项交付：把自己平平安安送回家。",
+    "广告有投放时段，生活也该有自己的时间。",
+
+    # 11—20：指标与数据
+    "CTR 看了一整天，今晚最想点击的是外卖菜单。",
+    "今天的 ROAS 已经研究够久了，晚饭好不好吃不用再算回报率。",
+    "CPM 会波动，今晚吃饭的心情尽量稳一点。",
+    "白天盯 CPA，晚上记得关心自己的电量。",
+    "数据可以按小时看，生活不必按分钟复盘。",
+    "今天解释了很多曲线，晚上不用解释自己为什么想躺一会儿。",
+    "归因窗口研究了一天，今晚把快乐归因给一顿好饭。",
+    "报表里的小数点可以精确，休息时间不用算得那么细。",
+    "白天关心用户留存，晚上也给自己留一点空闲。",
+    "今天看够趋势了，晚上看看月亮，不用分析走势。",
+
+    # 21—30：素材与创意
+    "素材可以继续迭代，今晚的你可以先停止加载。",
+    "钩子想了一天，晚上就让饭菜香把你吸引走。",
+    "白天研究前三秒怎么留人，晚上允许自己发呆三分钟。",
+    "创意有卡壳的时候，去生活里走一走，灵感不一定住在后台。",
+    "今天改了很多版文案，今晚的安排可以用第一版：吃饭、休息。",
+    "别人问今天剪了什么，就说剪掉了一点明天的工作量。",
+    "素材需要新鲜感，晚饭也可以换一家没吃过的。",
+    "白天忙着做吸睛封面，晚上看看没有滤镜的天空。",
+    "标题改到第十版的时候，别忘了晚饭不需要第十轮审批。",
+    "今天搜了很多参考，晚上可以暂时只参考自己的心情。",
+
+    # 31—40：TikTok 投放日常
+    "今天研究了不少 TikTok 素材，晚上给自己的相册拍张生活照。",
+    "白天忙着找视频节奏，晚上把自己的节奏放慢一点。",
+    "完播率看了一天，今晚争取完整吃完一顿不被打断的饭。",
+    "今天反复看了很多开头，晚上给自己一个舒服的收尾。",
+    "Spark Ads 的事情交接好，今晚也给生活留一点火花。",
+    "今天听了不少热门配乐，回家放一首自己真正喜欢的。",
+    "素材里的生活感找了一天，晚上去过一点真实的生活。",
+    "TikTok 上的热闹很多，今晚也可以选择安静。",
+    "今天研究了很多达人表达，晚上不用表演，做自己就好。",
+    "短视频讲究迅速抓住注意力，休息可以慢慢来。",
+
+    # 41—50：Google 投放日常
+    "搜索词看了一天，今晚想搜点简单的：附近有什么好吃的。",
+    "白天整理关键词，晚上的关键词是舒服、自在、吃饱。",
+    "今天研究了不少用户意图，晚上也问问自己真正想做什么。",
+    "广告文案要考虑字符数，和朋友聊天可以不用。",
+    "今天的搜索报告先收好，生活里还有很多不用搜索的快乐。",
+    "Google 后台看了一天，回家看看不用筛选条件的风景。",
+    "白天关心展示份额，晚上给自己的时间多留一点份额。",
+    "落地页检查完了，接下来检查一下钥匙和手机，准备回家。",
+    "广告组分了不少，今晚的安排不用分太细。",
+    "今天解决了一个问题，就少了一个明天需要搜索的问题。",
+
+    # 51—60：Meta 投放日常
+    "今天研究了很多 Meta 受众，今晚也照顾一下自己的兴趣。",
+    "白天做 A/B 测试，晚上吃面还是吃饭，可以凭心情决定。",
+    "Advantage+ 看了一天，今晚给自己加一点休息时间。",
+    "今天盯了不少广告频次，晚上不必频繁查看工作消息。",
+    "素材有疲劳的时候，人也有。累了，就认真休息一下。",
+    "今天研究了很多互动，回家和身边的人好好聊两句。",
+    "Facebook 和 Instagram 的动态看了一天，晚上关注一下自己的生活动态。",
+    "白天看了很多评论，晚上不必给自己写一篇绩效评语。",
+    "今天调整了不少设置，晚上把灯光和坐姿调舒服一点。",
+    "广告有很多版位，生活里也该有休息的位置。",
+
+    # 61—70：跨境团队与协作
+    "白天在美国、韩国和欧洲市场之间切换，晚上回到自己的时区。",
+    "今天看了几种语言的素材，回家一句“吃饭了”就很动听。",
+    "跨境工作的时差不少，交接清楚后，也照顾好自己的作息。",
+    "英国、欧洲、美国的市场都有各自节奏，你也可以有自己的节奏。",
+    "今天把很多信息对齐了，晚上把靠垫摆舒服就行。",
+    "市场可以研究得很远，今晚的快乐也可以就在楼下。",
+    "今天和不同地方的人协作，晚上给熟悉的人留一点时间。",
+    "今天看了很多购物场景，晚上去便利店买点自己喜欢的东西。",
+    "工作需要跨时区配合，也谢谢今天认真接力的每一个人。",
+    "汇率、价格和运费研究了一天，今晚一顿热饭的满足感不用换算。",
+
+    # 71—80：轻松生活
+    "今天的工作到这里，接下来轮到生活上场。",
+    "今晚吃点喜欢的吧，别把每一顿饭都吃成赶时间。",
+    "回家路上抬头看看，今天的天空可能有点不一样。",
+    "把耳机里的歌换成喜欢的那首，慢慢从工作状态里走出来。",
+    "允许自己看点没用但开心的东西，快乐不需要写周报。",
+    "下班后不一定要很精彩，舒服、自在就已经很好。",
+    "晚上留一点时间给喜欢的事，哪怕只有十分钟。",
+    "今天的最后一个重要任务：把自己喂饱。",
+    "如果养了小动物，回家还有一位特别的同事等着你。",
+    "下班路上的那几分钟，也算自己的生活。",
+
+    # 81—90：给自己一点耐心
+    "如果今天不太顺利，就让它在今天结束，不必再罚自己一个晚上。",
+    "一次没做好，不代表你一直做不好。今晚先休息。",
+    "别用最累的时候，给自己下最严厉的结论。",
+    "事情没按计划走，也不妨碍你今晚吃顿好饭。",
+    "暂时没有答案也没关系，清醒一点以后再看。",
+    "今天有件事做得不错吧？别只盯着还没完成的部分。",
+    "小进展也算进展，值得在心里给自己点个赞。",
+    "今天如果被夸了，就大方收下，别急着说自己没做什么。",
+    "有些事情需要时间，今晚先让自己休息。",
+    "愿你记住今天做成的事，而不只是差一点的地方。",
+
+    # 91—100：好好休息
+    "盯了一天屏幕，给眼睛几分钟看远处的时间。",
+    "起身伸个懒腰，提醒身体：今天可以放松了。",
+    "手机还有电不代表你也有，累了就先休息。",
+    "休息不是奖励，不需要把所有事做完才能拥有。",
+    "今晚早点洗漱，别让困意一直等你。",
+    "不必把晚上安排得很满，留白也是生活的一部分。",
+    "给家人发条消息，或者问问朋友最近怎么样。",
+    "今天照顾了很多事情，最后记得照顾一下自己的心情。",
+    "明天还有明天的故事，今晚先过好自己的这一页。",
+    "收工啦。愿你今晚睡得踏实，醒来时多一点轻松。",
+]
+
 
 ENDINGS = [
-    "🌙 今晚属于你自己",
-    "🍜 好好吃顿饭",
-    "🎵 来点音乐放松一下",
-    "📵 可以暂时放下工作消息了",
-    "🛋️ 找个舒服的姿势放松一下",
-    "🌙 关掉屏幕，享受今晚",
-    "🍵 泡杯茶，什么都不想",
-    "🌙 今晚不谈工作",
-    "🎮 玩一会儿，别卷了",
-    "🌙 好好睡一觉",
+    "🌙 今晚的快乐，不设 KPI",
+    "🍜 今日下一站：好好吃饭",
+    "🎵 把注意力交给喜欢的音乐",
+    "🛋️ 投放人，也需要休息",
+    "🍵 喝点水，缓口气",
+    "🌃 报表之外，也有好风景",
+    "🏡 路上注意安全，平安到家",
+    "📖 翻几页闲书也不错",
+    "🎮 快乐一会儿，不必交作业",
+    "🧸 今天也要对自己温柔一点",
+    "🌿 肩膀松一松，眉头也松一松",
+    "🍲 晚饭要热乎，心情要舒服",
+    "🎧 今天的下一次点击：播放",
+    "💬 和在意的人聊点生活",
+    "🕯️ 把今晚的节奏调慢一点",
+    "🛁 工作收尾，舒适上线",
+    "🌌 今晚不必事事复盘",
+    "📵 给眼睛一点离开屏幕的时间",
+    "🛌 困了就休息，别硬撑",
+    "✨ 把一点时间，留给自己",
 ]
 
 
-def get_work_quote(fallback):
-    if not TIANAPI_KEY:
-        print("未配置 TIANAPI_KEY，使用备用文案")
-        return fallback
+def shuffled_copy(items, seed):
+    """
+    使用固定种子打乱顺序。
 
-    try:
-        response = requests.get(
-            "https://apis.tianapi.com/dgryl/index",
-            params={"key": TIANAPI_KEY},
-            timeout=10,
-        )
-        response.raise_for_status()
-        data = response.json()
+    同一份代码每次启动都会生成相同顺序，
+    因此同一天重复运行时，文案保持一致。
+    """
+    result = list(items)
+    random.Random(seed).shuffle(result)
+    return result
 
-        if data.get("code") != 200:
-            print(f"语录接口返回错误：{data.get('code')} {data.get('msg')}")
-            return fallback
 
-        content = data.get("result", {}).get("content", "").strip()
-        if not content or len(content) > 100:
-            print("语录为空或过长，使用备用文案")
-            return fallback
+SHUFFLED_TITLES = shuffled_copy(
+    TITLES,
+    "evening-ad-titles-v2",
+)
 
-        return content
+SHUFFLED_MESSAGES = shuffled_copy(
+    MESSAGES,
+    "evening-ad-messages-v2",
+)
 
-    except (requests.RequestException, ValueError, TypeError) as error:
-        print(f"获取语录失败，使用备用文案：{error}")
-        return fallback
+SHUFFLED_ENDINGS = shuffled_copy(
+    ENDINGS,
+    "evening-ad-endings-v2",
+)
+
+
+def select_content(today):
+    """
+    按自然日从打乱后的列表中轮换。
+
+    标题每 40 个自然日循环一次。
+    正文每 100 个自然日循环一次。
+    非工作日不推送，也不补发当天的文案。
+    """
+    day_index = today.toordinal()
+
+    title = SHUFFLED_TITLES[
+        day_index % len(SHUFFLED_TITLES)
+    ]
+
+    body = SHUFFLED_MESSAGES[
+        day_index % len(SHUFFLED_MESSAGES)
+    ]
+
+    # 每完成一轮正文，更换结尾搭配的偏移量。
+    message_cycle = day_index // len(SHUFFLED_MESSAGES)
+
+    ending = SHUFFLED_ENDINGS[
+        (day_index + message_cycle) % len(SHUFFLED_ENDINGS)
+    ]
+
+    return title, body, ending
 
 
 def build_card():
     now = datetime.now(ZoneInfo("Asia/Shanghai"))
     today = now.date()
 
+    # 按中国工作日判断，包含节假日与调休。
     if not is_workday(today):
-        print("今日非工作日，跳过推送")
+        print(f"{today} 非工作日，跳过推送")
         return None
 
-    day_index = now.timetuple().tm_yday
-    fallback = FALLBACK_MESSAGES[day_index % len(FALLBACK_MESSAGES)]
-    body = get_work_quote(fallback)
-    ending = ENDINGS[day_index % len(ENDINGS)]
+    title, body, ending = select_content(today)
 
-    weekdays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
+    weekdays = [
+        "周一",
+        "周二",
+        "周三",
+        "周四",
+        "周五",
+        "周六",
+        "周日",
+    ]
+
+    date_str = now.strftime("%Y年%m月%d日")
     weekday_str = weekdays[now.weekday()]
-    date_str = today.strftime("%Y年%m月%d日")
+    time_str = now.strftime("%H:%M")
 
     return {
         "msg_type": "interactive",
         "card": {
-            "config": {"wide_screen_mode": True},
+            "config": {
+                "wide_screen_mode": True,
+            },
             "header": {
                 "title": {
                     "tag": "plain_text",
-                    "content": "🌆 下班啦，今天辛苦了",
+                    "content": title,
                 },
                 "template": "purple",
             },
@@ -99,16 +304,25 @@ def build_card():
                     "text": {
                         "tag": "lark_md",
                         "content": (
-                            f"**{date_str}　{weekday_str}　19:00**\n\n"
-                            f"{body}"
+                            f"**📅 {date_str}　"
+                            f"{weekday_str}　{time_str}**"
                         ),
                     },
                 },
-                {"tag": "hr"},
                 {
                     "tag": "div",
                     "text": {
-                        "tag": "lark_md",
+                        "tag": "plain_text",
+                        "content": body,
+                    },
+                },
+                {
+                    "tag": "hr",
+                },
+                {
+                    "tag": "div",
+                    "text": {
+                        "tag": "plain_text",
                         "content": ending,
                     },
                 },
@@ -118,22 +332,59 @@ def build_card():
 
 
 def send_to_feishu(card):
+    # 一次脚本运行只发送一次请求，不自动重试。
     try:
-        response = requests.post(FEISHU_WEBHOOK, json=card, timeout=10)
-        response.raise_for_status()
+        response = requests.post(
+            FEISHU_WEBHOOK,
+            json=card,
+            timeout=15,
+        )
+    except requests.RequestException as error:
+        raise RuntimeError(
+            f"飞书请求异常：{type(error).__name__}。"
+            "请先检查群里是否收到，再决定是否重跑。"
+        ) from None
 
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"飞书 HTTP 错误：{response.status_code}"
+        )
+
+    try:
         result = response.json()
-        if result.get("code", result.get("StatusCode", 0)) != 0:
-            raise RuntimeError(f"飞书返回错误：{result}")
+    except ValueError:
+        raise RuntimeError(
+            "飞书返回的内容不是有效 JSON"
+        ) from None
 
-        print("飞书下班卡片推送成功")
+    if not isinstance(result, dict):
+        raise RuntimeError("飞书返回格式异常")
 
-    except (requests.RequestException, ValueError, RuntimeError) as error:
-        print(f"飞书推送失败：{error}")
+    code = result.get(
+        "code",
+        result.get("StatusCode"),
+    )
+
+    if code != 0:
+        raise RuntimeError(
+            f"飞书推送失败，错误码：{code}"
+        )
+
+    print("飞书下班卡片推送成功")
+
+
+def main():
+    card = build_card()
+
+    if card is not None:
+        send_to_feishu(card)
+
+    print("完成")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as error:
+        print(f"运行失败：{error}")
         sys.exit(1)
-
-
-card = build_card()
-if card is not None:
-    send_to_feishu(card)
-print("完成")
