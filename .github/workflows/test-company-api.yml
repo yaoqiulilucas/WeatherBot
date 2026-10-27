@@ -1,0 +1,113 @@
+name: Test Company AI API
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  test-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Test direct model connection
+        env:
+          COMPANY_API_KEY: ${{ secrets.COMPANY_API_KEY }}
+          COMPANY_API_BASE: ${{ secrets.COMPANY_API_BASE }}
+          COMPANY_MODEL: ${{ secrets.COMPANY_MODEL }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+          import urllib.request
+          import urllib.error
+          from urllib.parse import urlsplit
+
+          key = os.environ.get("COMPANY_API_KEY", "").strip()
+          base = os.environ.get("COMPANY_API_BASE", "").strip().rstrip("/")
+          model = os.environ.get("COMPANY_MODEL", "").strip()
+
+          if not all([key, base, model]):
+              print("FAIL：缺少 Secret，请检查三个名称和值。")
+              sys.exit(1)
+
+          parsed = urlsplit(base)
+          if (
+              parsed.scheme != "https"
+              or parsed.hostname != "bmc-llm-relay.bluemediagroup.cn"
+              or parsed.username
+              or parsed.password
+              or parsed.query
+              or parsed.fragment
+              or parsed.path != "/v1"
+              or parsed.port not in (None, 443)
+          ):
+              print("FAIL：接口地址与预期公司地址不一致。")
+              sys.exit(1)
+
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+
+          opener = urllib.request.build_opener(NoRedirect())
+
+          tests = [
+              ("普通对话", "请只回复 OK。", False),
+              ("JSON 输出", '请只输出 JSON：{"ok": true}', True),
+          ]
+
+          for label, prompt, json_mode in tests:
+              payload = {
+                  "model": model,
+                  "messages": [
+                      {"role": "user", "content": prompt}
+                  ],
+                  "reasoning_effort": "low",
+                  "max_completion_tokens": 2500,
+                  "stream": False,
+              }
+
+              if json_mode:
+                  payload["response_format"] = {"type": "json_object"}
+
+              request = urllib.request.Request(
+                  base + "/chat/completions",
+                  data=json.dumps(payload).encode("utf-8"),
+                  headers={
+                      "Authorization": "Bearer " + key,
+                      "Content-Type": "application/json",
+                  },
+                  method="POST",
+              )
+
+              try:
+                  with opener.open(request, timeout=90) as response:
+                      result = json.load(response)
+                      status = response.status
+
+                  choices = result.get("choices") or []
+                  message = choices[0].get("message") if choices else {}
+                  content = (message or {}).get("content")
+
+                  if not isinstance(content, str) or not content.strip():
+                      raise ValueError("empty response")
+
+                  if json_mode:
+                      value = json.loads(content)
+                      if not isinstance(value, dict) or value.get("ok") is not True:
+                          raise ValueError("invalid JSON result")
+
+                  print(f"PASS：{label}，HTTP {status}，内容校验通过。")
+
+              except urllib.error.HTTPError as error:
+                  print(f"FAIL：{label}，HTTP {error.code}。")
+                  sys.exit(1)
+              except Exception as error:
+                  print(f"FAIL：{label}，错误类型 {type(error).__name__}。")
+                  sys.exit(1)
+
+          print("全部通过：GitHub 云端可直接调用公司模型，无需本机 Cherry。")
+          PY
